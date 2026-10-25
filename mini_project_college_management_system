@@ -1,0 +1,53 @@
+#include <iostream>
+#include <iomanip>
+#include <string>
+using namespace std;
+class Person
+{
+protected:
+    string name;
+    int age;
+
+public:
+    // Default Constructor
+    Person()
+    {
+        name = "Unknown";
+        age = 0;
+    }
+
+    // Parameterized Constructor
+    Person(string n, int a)
+    {
+        name = n;
+        age = a;
+    }
+
+    // Copy Constructor
+    Person(const Person &p)
+    {
+        name = p.name;
+        age = p.age;
+    }
+
+    // Inline Function
+    inline int getAge()
+    {
+        return age;
+    }
+
+    // Member function defined outside class
+    void displayPerson();
+
+    // Virtual destructor
+    virtual ~Person()
+    {
+        cout << "Person destructor called.\n";
+    }
+};
+
+void Person::displayPerson()
+{
+    cout << "Name : " << name << endl;
+    cout << "Age  : " << age << endl;
+}
