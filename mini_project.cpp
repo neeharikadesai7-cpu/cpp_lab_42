@@ -1,378 +1,178 @@
-
 #include <iostream>
-#include <iomanip>
+#include <fstream>
+#include <sstream>
+#include <vector>
 #include <string>
-#include <limits>
 using namespace std;
 
-// ==================================================
-// UNIT 1: BASICS OF C++
-// ==================================================
-
-#define MAX_STUDENTS 50
-
-int globalValue = 100;
-
-inline int square(int n) {
-    return n * n;
-}
-
-int add(int a, int b = 10) {
-    return a + b;
-}
-
-void passByValue(int x) {
-    x = 500;
-}
-
-void passByReference(int &x) {
-    x = 500;
-}
-
-int& returnByReference(int &x) {
-    return x;
-}
-
-void displayPointer(float *p) {
-    if (p != nullptr)
-        cout << "Value through pointer: " << *p << '\n';
-}
-
-// ==================================================
-// UNIT 2 & 3: CLASSES AND INHERITANCE
-// ==================================================
-
-class Person {
-protected:
+// 1. Class and 2. Encapsulation
+class Student {
+private:
+    int id;
     string name;
-    int age;
+    float marks;
 
 public:
-    Person() : name("Unknown"), age(0) {}
+    // 3. Constructor
+    Student(int i = 0, string n = "", float m = 0)
+        : id(i), name(n), marks(m) {}
 
-    Person(string n, int a) : name(n), age(a) {}
-
-    Person(const Person &p) : name(p.name), age(p.age) {}
-
-    virtual void displayPerson() const {
-        cout << "Name: " << name << "\nAge: " << age << '\n';
+    int getId() const {
+        return id;
     }
 
-    virtual ~Person() {}
+    string getName() const {
+        return name;
+    }
+
+    float getMarks() const {
+        return marks;
+    }
+
+    // 5. Polymorphism: Function overloading
+    virtual void display() const {
+        cout << "ID: " << id
+             << ", Name: " << name
+             << ", Marks: " << marks << endl;
+    }
+
+    void display(string heading) const {
+        cout << heading << endl;
+        display();
+    }
 };
 
-// Student inherits publicly from Person
-class Student : public Person {
-private:
-    int rollNo;
-    string department;
-    float marks[5];
-
-    static int studentCount;
-
+// 4. Inheritance
+class Result : public Student {
 public:
-    // Nested class
-    class Address {
-    public:
-        string city;
+    Result(int i = 0, string n = "", float m = 0)
+        : Student(i, n, m) {}
 
-        Address(string c = "Kolhapur") : city(c) {}
-    };
+    void display() const override {
+        Student::display();
+        cout << "Grade: ";
 
-    Address address;
+        if (getMarks() >= 90)
+            cout << "A";
+        else if (getMarks() >= 75)
+            cout << "B";
+        else if (getMarks() >= 50)
+            cout << "C";
+        else
+            cout << "Fail";
 
-    // Default constructor
-    Student() : Person(), rollNo(0), department("CSE") {
-        for (int i = 0; i < 5; i++)
-            marks[i] = 0;
+        cout << endl;
+    }
+};
 
-        studentCount++;
+// 6. File Handling
+void saveRecords(const vector<Result>& students) {
+    ofstream file("students.txt");
+
+    for (const Result& s : students) {
+        file << s.getId() << "|"
+             << s.getName() << "|"
+             << s.getMarks() << endl;
     }
 
-    // Parameterized constructor
-    Student(string n, int a, int r, string d)
-        : Person(n, a), rollNo(r), department(d) {
-        for (int i = 0; i < 5; i++)
-            marks[i] = 0;
+    file.close();
+    cout << "Records saved successfully!\n";
+}
 
-        studentCount++;
-    }
+void loadRecords(vector<Result>& students) {
+    ifstream file("students.txt");
+    string line;
 
-    // Copy constructor
-    Student(const Student &s)
-        : Person(s), rollNo(s.rollNo),
-          department(s.department), address(s.address) {
-        for (int i = 0; i < 5; i++)
-            marks[i] = s.marks[i];
+    while (getline(file, line)) {
+        stringstream ss(line);
+        string id, name, marks;
 
-        studentCount++;
-    }
-
-    // Function overloading
-    void setMarks() {
-        for (int i = 0; i < 5; i++) {
-            cout << "Enter marks for subject " << i + 1 << " (0-100): ";
-            cin >> marks[i];
-
-            if (marks[i] < 0 || marks[i] > 100) {
-                cout << "Invalid marks. Setting to 0.\n";
-                marks[i] = 0;
-            }
+        if (getline(ss, id, '|') &&
+            getline(ss, name, '|') &&
+            getline(ss, marks)) {
+            students.emplace_back(
+                stoi(id), name, stof(marks));
         }
     }
 
-    void setMarks(float m) {
-        if (m >= 0 && m <= 100)
-            marks[0] = m;
-    }
-
-    void setMarks(float m1, float m2) {
-        if (m1 >= 0 && m1 <= 100)
-            marks[0] = m1;
-
-        if (m2 >= 0 && m2 <= 100)
-            marks[1] = m2;
-    }
-
-    float calculateTotal() const {
-        float total = 0;
-
-        for (int i = 0; i < 5; i++)
-            total += marks[i];
-
-        return total;
-    }
-
-    float calculatePercentage(float maximum = 500) const {
-        if (maximum <= 0)
-            return 0;
-
-        return (calculateTotal() / maximum) * 100;
-    }
-
-    // Returning a reference
-    float& getMark(int index) {
-        if (index < 0 || index >= 5)
-            throw out_of_range("Invalid subject index");
-
-        return marks[index];
-    }
-
-    int getRollNo() const {
-        return rollNo;
-    }
-
-    bool search(int roll) const {
-        return rollNo == roll;
-    }
-
-    bool compare(const Student &s) const {
-        return calculatePercentage() > s.calculatePercentage();
-    }
-
-    static int getStudentCount() {
-        return studentCount;
-    }
-
-    void display() const {
-        cout << "\n---------- STUDENT DETAILS ----------\n";
-        cout << "Roll Number: " << rollNo << '\n';
-        cout << "Name: " << name << '\n';
-        cout << "Age: " << age << '\n';
-        cout << "Department: " << department << '\n';
-        cout << "City: " << address.city << '\n';
-
-        cout << "Marks: ";
-        for (int i = 0; i < 5; i++)
-            cout << marks[i] << " ";
-
-        cout << "\nTotal Marks: " << calculateTotal();
-        cout << "\nPercentage: " << fixed << setprecision(2)
-             << calculatePercentage() << "%\n";
-    }
-
-    ~Student() override {
-        studentCount--;
-    }
-};
-
-// Definition of static data member
-int Student::studentCount = 0;
-
-// Faculty inherits from Person
-class Faculty : public Person {
-private:
-    int employeeId;
-    string department;
-    float monthlySalary;
-
-public:
-    Faculty(string n, int a, int id, string d, float salary)
-        : Person(n, a), employeeId(id),
-          department(d), monthlySalary(salary) {}
-
-    float annualSalary() const {
-        return monthlySalary * 12;
-    }
-
-    void displayFaculty() const {
-        cout << "\n---------- FACULTY DETAILS ----------\n";
-        displayPerson();
-        cout << "Employee ID: " << employeeId << '\n';
-        cout << "Department: " << department << '\n';
-        cout << "Monthly Salary: " << monthlySalary << '\n';
-        cout << "Annual Salary: " << annualSalary() << '\n';
-    }
-
-    ~Faculty() override {}
-};
-
-class Department {
-private:
-    string departmentName;
-    string hod;
-
-public:
-    Department(string d = "CSE", string h = "Not Assigned")
-        : departmentName(d), hod(h) {}
-
-    void display() const {
-        cout << "\nDepartment: " << departmentName << '\n';
-        cout << "Head of Department: " << hod << '\n';
-    }
-};
-
-// ==================================================
-// INHERITANCE TYPES DEMONSTRATION
-// ==================================================
-
-// Multilevel inheritance
-class EngineeringStudent : public Student {
-private:
-    string branch;
-
-public:
-    EngineeringStudent(string n, int a, int r,
-                       string d, string b)
-        : Student(n, a, r, d), branch(b) {}
-
-    void displayEngineeringStudent() const {
-        display();
-        cout << "Engineering Branch: " << branch << '\n';
-    }
-};
-
-// Multiple inheritance
-class Sports {
-protected:
-    string sport;
-
-public:
-    Sports(string s = "Not specified") : sport(s) {}
-};
-
-class SportsStudent : public Student, public Sports {
-public:
-    SportsStudent(string n, int a, int r, string d, string s)
-        : Student(n, a, r, d), Sports(s) {}
-
-    void displaySports() const {
-        display();
-        cout << "Sport: " << sport << '\n';
-    }
-};
-
-// Private inheritance
-class PrivateStudent : private Person {
-public:
-    PrivateStudent(string n, int a) : Person(n, a) {}
-
-    void displayPrivateStudent() const {
-        displayPerson();
-    }
-};
-
-// ==================================================
-// MAIN PROGRAM
-// ==================================================
+    file.close();
+}
 
 int main() {
-    Student* students[MAX_STUDENTS] = {};
-    int studentTotal = 0;
-    int choice = -1;
+    vector<Result> students;
+    loadRecords(students);
+
+    int choice;
 
     do {
-        cout << "\n\n====================================\n";
-        cout << "     COLLEGE MANAGEMENT SYSTEM\n";
-        cout << "====================================\n";
+        cout << "\n--- STUDENT MANAGEMENT SYSTEM ---\n";
         cout << "1. Add Student\n";
         cout << "2. Display All Students\n";
         cout << "3. Search Student\n";
-        cout << "4. Faculty Details\n";
-        cout << "5. Department Details\n";
-        cout << "6. Compare Two Students\n";
-        cout << "7. Copy Constructor Demonstration\n";
-        cout << "8. Function Overloading Demonstration\n";
-        cout << "9. Pointer and Reference Demonstration\n";
-        cout << "10. Static Member Demonstration\n";
-        cout << "11. Basic C++ Concepts Demonstration\n";
-        cout << "12. Inheritance Demonstration\n";
-        cout << "0. Exit\n";
-        cout << "Enter your choice: ";
+        cout << "4. Calculate Result\n";
+        cout << "5. Save Records\n";
+        cout << "6. Exit\n";
+        cout << "Enter choice: ";
         cin >> choice;
 
-        switch (choice) {
+        if (choice == 1) {
+            int id;
+            string name;
+            float marks;
 
-        case 1: {
-            if (studentTotal >= MAX_STUDENTS) {
-                cout << "Student storage is full.\n";
-                break;
+            cout << "Enter student ID: ";
+            cin >> id;
+
+            bool exists = false;
+            for (const Result& s : students) {
+                if (s.getId() == id) {
+                    exists = true;
+                    break;
+                }
             }
 
-            string n, d;
-            int a, r;
+            if (exists) {
+                cout << "Student ID already exists!\n";
+                continue;
+            }
 
             cout << "Enter student name: ";
-            cin >> ws;
-            getline(cin, n);
+            getline(cin >> ws, name);
 
-            cout << "Enter age: ";
-            cin >> a;
+            cout << "Enter marks (0-100): ";
+            cin >> marks;
 
-            cout << "Enter roll number: ";
-            cin >> r;
+            if (cin.fail() || marks < 0 || marks > 100) {
+                cout << "Invalid marks!\n";
+                cin.clear();
+                cin.ignore(10000, '\n');
+                continue;
+            }
 
-            cout << "Enter department: ";
-            cin >> ws;
-            getline(cin, d);
-
-            students[studentTotal] = new Student(n, a, r, d);
-            students[studentTotal]->setMarks();
-
-            studentTotal++;
+            students.emplace_back(id, name, marks);
             cout << "Student added successfully!\n";
-            break;
+            saveRecords(students);
         }
 
-        case 2:
-            if (studentTotal == 0)
-                cout << "No students registered.\n";
+        else if (choice == 2) {
+            if (students.empty()) {
+                cout << "No student records found.\n";
+            } else {
+                for (const Result& s : students)
+                    s.display();
+            }
+        }
 
-            for (int i = 0; i < studentTotal; i++)
-                students[i]->display();
+        else if (choice == 3) {
+            int id;
+            cout << "Enter student ID to search: ";
+            cin >> id;
 
-            break;
-
-        case 3: {
-            int roll;
             bool found = false;
 
-            cout << "Enter roll number to search: ";
-            cin >> roll;
-
-            for (int i = 0; i < studentTotal; i++) {
-                if (students[i]->search(roll)) {
-                    students[i]->display();
+            for (const Result& s : students) {
+                if (s.getId() == id) {
+                    s.display("Student Found:");
                     found = true;
                     break;
                 }
@@ -380,175 +180,27 @@ int main() {
 
             if (!found)
                 cout << "Student not found.\n";
-
-            break;
         }
 
-        case 4: {
-            Faculty f("Professor Patil", 40, 101, "CSE", 50000);
-            f.displayFaculty();
-            break;
+        else if (choice == 4) {
+            for (const Result& s : students)
+                s.display();
         }
 
-        case 5: {
-            Department d("Computer Science", "Dr. Kulkarni");
-            d.display();
-            break;
+        else if (choice == 5) {
+            saveRecords(students);
         }
 
-        case 6: {
-            if (studentTotal < 2) {
-                cout << "Add at least two students first.\n";
-                break;
-            }
-
-            int r1, r2;
-            Student *s1 = nullptr, *s2 = nullptr;
-
-            cout << "Enter first roll number: ";
-            cin >> r1;
-
-            cout << "Enter second roll number: ";
-            cin >> r2;
-
-            for (int i = 0; i < studentTotal; i++) {
-                if (students[i]->search(r1))
-                    s1 = students[i];
-
-                if (students[i]->search(r2))
-                    s2 = students[i];
-            }
-
-            if (s1 == nullptr || s2 == nullptr) {
-                cout << "Student not found.\n";
-            } else if (s1 == s2) {
-                cout << "You selected the same student twice.\n";
-            } else if (s1->compare(*s2)) {
-                cout << "First student has a higher percentage.\n";
-            } else if (s2->compare(*s1)) {
-                cout << "Second student has a higher percentage.\n";
-            } else {
-                cout << "Both students have equal percentages.\n";
-            }
-
-            break;
+        else if (choice == 6) {
+            saveRecords(students);
+            cout << "Exiting program. Goodbye!\n";
         }
 
-        case 7:
-            if (studentTotal == 0) {
-                cout << "Add a student first.\n";
-            } else {
-                Student copied(*students[0]);
-                cout << "Copy created using copy constructor:\n";
-                copied.display();
-            }
-            break;
-
-        case 8:
-            if (studentTotal == 0) {
-                cout << "Add a student first.\n";
-            } else {
-                students[0]->setMarks(95.0f);
-                students[0]->setMarks(80.0f, 85.0f);
-
-                cout << "Overloaded setMarks() functions demonstrated.\n";
-                students[0]->display();
-            }
-            break;
-
-        case 9:
-            if (studentTotal == 0) {
-                cout << "Add a student first.\n";
-            } else {
-                float *ptr = &students[0]->getMark(0);
-
-                cout << "First subject through pointer: ";
-                displayPointer(ptr);
-
-                students[0]->getMark(0) = 99;
-
-                cout << "Updated mark through reference: "
-                     << students[0]->getMark(0) << '\n';
-            }
-            break;
-
-        case 10:
-            cout << "Current Student objects: "
-                 << Student::getStudentCount() << '\n';
-            break;
-
-        case 11: {
-            int x = 5;
-
-            cout << "\n--- BASIC C++ CONCEPTS ---\n";
-            cout << "Global variable: " << globalValue << '\n';
-            cout << "Square using inline function: " << square(x) << '\n';
-            cout << "Function with default argument: " << add(5) << '\n';
-
-            passByValue(x);
-            cout << "After pass by value: " << x << '\n';
-
-            passByReference(x);
-            cout << "After pass by reference: " << x << '\n';
-
-            returnByReference(x) = 700;
-            cout << "After return by reference: " << x << '\n';
-
-            int numbers[3] = {10, 20, 30};
-            int *p = numbers;
-
-            cout << "Array using pointer arithmetic: "
-                 << *(p + 1) << '\n';
-
-            int *dynamicValue = new int(100);
-            cout << "Dynamic memory value: " << *dynamicValue << '\n';
-            delete dynamicValue;
-
-            cout << "Type conversion: "
-                 << static_cast<double>(x) / 2 << '\n';
-
-            cout << "Formatted number: " << fixed << setprecision(2)
-                 << 3.14159 << '\n';
-
-            break;
+        else {
+            cout << "Invalid choice!\n";
         }
 
-        case 12: {
-            cout << "\n--- MULTILEVEL INHERITANCE ---\n";
-            EngineeringStudent e("Aarav", 20, 201, "CSE", "Computer");
+    } while (choice != 6);
 
-            // Demonstrates inheritance and derived class methods.
-            e.displayEngineeringStudent();
-
-            cout << "\n--- MULTIPLE INHERITANCE ---\n";
-            SportsStudent ss("Isha", 19, 202, "CSE", "Badminton");
-            ss.displaySports();
-
-            cout << "\n--- PRIVATE INHERITANCE ---\n";
-            PrivateStudent ps("Riya", 20);
-            ps.displayPrivateStudent();
-
-            cout << "\n--- HIERARCHICAL INHERITANCE ---\n";
-            Faculty f("Professor Desai", 42, 301, "CSE", 60000);
-            f.displayFaculty();
-
-            break;
-        }
-
-        case 0:
-            cout << "Exiting College Management System...\n";
-            break;
-
-        default:
-            cout << "Invalid choice. Try again.\n";
-        }
-
-    } while (choice != 0);
-
-    // Release dynamically allocated memory.
-    for (int i = 0; i < studentTotal; i++)
-        delete students[i];
-
-    cout << "All student memory released. Goodbye!\n";
     return 0;
 }
